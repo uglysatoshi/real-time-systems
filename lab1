@@ -1,0 +1,44 @@
+#!/bin/bash
+
+# Проверяем, что скрипт запущен от имени root
+if [ "$EUID" -ne 0 ]; then
+  echo "Пожалуйста, запустите скрипт от имени root."
+  exit 1
+fi
+
+# Перезаписываем файл /etc/network/interfaces
+cat > /etc/network/interfaces <<EOL
+source /etc/network/interfaces.d/*
+
+auto lo
+iface lo inet loopback
+
+# Основной интерфейс для подключения к сети
+allow-hotplug enp0s3
+iface enp0s3 inet dhcp
+
+# Конфигурация шлюза внутренней сети
+allow-hotplug enp0s8
+iface enp0s8 inet static
+address 192.168.1.1
+netmask 255.255.255.0
+network 192.168.1.0
+dns-nameservers 77.88.8.1 8.8.8.8
+EOL
+
+echo "Файл /etc/network/interfaces успешно перезаписан."
+
+# Включаем интерфейс шлюза
+ifup enp0s8
+
+# Устанавливаем iptables
+apt-get install iptables-persistent netfilter-persistent -y
+
+# Добавляем правило перенаправления трафика
+iptables -t nat -A POSTROUTING -o enp0s3 -j MASQUERADE
+iptables-save
+netfilter-persistent save
+
+# Добавляем форвардинг
+sysctl -w net.ipv4.ip_forward="1"
+sysctl -p
