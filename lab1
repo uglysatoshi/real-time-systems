@@ -45,7 +45,7 @@ sysctl -p
 apt install -y bind9 bind9utils swaks
 
 # Загружаем DHCP
-apt install -y isc-dhcp-server
+apt install -y isc-dhcp-server >/dev/null
 
 # Добавляем интерфейс для работы DHCP
 cat > /etc/default/isc-dhcp-server <<EOL
