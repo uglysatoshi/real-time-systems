@@ -30,7 +30,7 @@ EOL
 ifup enp0s8
 
 # Устанавливаем iptables
-apt-get install iptables-persistent netfilter-persistent -y
+apt-get install iptables-persistent netfilter-persistent gcc -y
 
 # Добавляем правило перенаправления трафика
 iptables -t nat -A POSTROUTING -o enp0s3 -j MASQUERADE
@@ -70,3 +70,13 @@ EOL
 
 # Запускаем DHCP-сервер
 /etc/init.d/isc-dhcp-server start
+
+# Задание по созданию программы на C
+gcc -o app lab1.c
+
+# Ввод значений 
+read -p "Введите первое число: " num1
+read -p "Введите второе число: " num2
+
+# Запуск программы с забранными значениями
+./app $num1 $num2
