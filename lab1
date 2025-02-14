@@ -25,23 +25,23 @@ simulate_loading() {
 
   # Перезаписываем файл /etc/network/interfaces
   cat > /etc/network/interfaces <<EOL
-  source /etc/network/interfaces.d/*
-  
-  auto lo
-  iface lo inet loopback
-  
-  # Основной интерфейс для подключения к сети
-  allow-hotplug enp0s3
-  iface enp0s3 inet dhcp
-  
-  # Конфигурация шлюза внутренней сети
-  allow-hotplug enp0s8
-  iface enp0s8 inet static
-  address           192.168.1.1
-  netmask           255.255.255.0
-  network           192.168.1.0
-  dns-nameservers   77.88.8.1 8.8.8.8
-  EOL
+source /etc/network/interfaces.d/*
+
+auto lo
+iface lo inet loopback
+
+# Основной интерфейс для подключения к сети
+allow-hotplug enp0s3
+iface enp0s3 inet dhcp
+
+# Конфигурация шлюза внутренней сети
+allow-hotplug enp0s8
+iface enp0s8 inet static
+address           192.168.1.1
+netmask           255.255.255.0
+network           192.168.1.0
+dns-nameservers   77.88.8.1 8.8.8.8
+EOL
 
   # Включаем интерфейс шлюза
   ifup enp0s8
@@ -66,29 +66,28 @@ simulate_loading() {
   
   # Добавляем интерфейс для работы DHCP
   cat > /etc/default/isc-dhcp-server <<EOL
-  INTERFACESv4="enp0s8"
-  INTERFACESv6=""
-  EOL
+INTERFACESv4="enp0s8"
+INTERFACESv6=""
+EOL
   
   # Добавляем правила работы DHCP
   cat > /etc/dhcp/dhcpd.conf <<EOL
-  option domain-name "WORKGROUP";
-  option domain-name-servers 8.8.8.8;
-  default-lease-time 600;
-  max-lease-time 7200;
-  subnet 192.168.1.0 netmask 255.255.255.0
-  {
-      range                       192.168.1.10 192.168.1.20;
-      option broadcast-address    192.168.1.255;
-      option routers              192.168.1.1;
-      option domain-name-servers  8.8.8.8;
-  }
-  EOL
+option domain-name "WORKGROUP";
+option domain-name-servers 8.8.8.8;
+default-lease-time 600;
+max-lease-time 7200;
+subnet 192.168.1.0 netmask 255.255.255.0
+{
+    range                       192.168.1.10 192.168.1.20;
+    option broadcast-address    192.168.1.255;
+    option routers              192.168.1.1;
+    option domain-name-servers  8.8.8.8;
+}
+EOL
   
     # Запускаем DHCP-сервер
-    /etc/init.d/isc-dhcp-server start
-  
-    echo "==== Завершение первой части скрипта ===="
+  /etc/init.d/isc-dhcp-server start 
+  echo "==== Завершение первой части скрипта ===="
 ) > "$LOG_FILE" 2>&1 &
 
 # Запускаем симуляцию загрузки, пока выполняется первая часть
