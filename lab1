@@ -1,81 +1,108 @@
 #!/bin/bash
 
+# Лог-файл
+LOG_FILE="script.log"
+
 # Проверяем, что скрипт запущен от имени root
 if [ "$EUID" -ne 0 ]; then
   echo "root required"
   exit 1
 fi
 
-# Перезаписываем файл /etc/network/interfaces
-cat > /etc/network/interfaces <<EOL
-source /etc/network/interfaces.d/*
-
-auto lo
-iface lo inet loopback
-
-# Основной интерфейс для подключения к сети
-allow-hotplug enp0s3
-iface enp0s3 inet dhcp
-
-# Конфигурация шлюза внутренней сети
-allow-hotplug enp0s8
-iface enp0s8 inet static
-address           192.168.1.1
-netmask           255.255.255.0
-network           192.168.1.0
-dns-nameservers   77.88.8.1 8.8.8.8
-EOL
-
-# Включаем интерфейс шлюза
-ifup enp0s8
-
-# Устанавливаем iptables
-apt-get install iptables-persistent netfilter-persistent gcc -y
-
-# Добавляем правило перенаправления трафика
-iptables -t nat -A POSTROUTING -o enp0s3 -j MASQUERADE
-iptables-save
-netfilter-persistent save
-
-# Добавляем форвардинг
-sysctl -w net.ipv4.ip_forward="1"
-sysctl -p
-
-# Настраиваиваем DNS
-apt install -y bind9 bind9utils swaks
-
-# Загружаем DHCP
-apt install -y isc-dhcp-server >/dev/null
-
-# Добавляем интерфейс для работы DHCP
-cat > /etc/default/isc-dhcp-server <<EOL
-INTERFACESv4="enp0s8"
-INTERFACESv6=""
-EOL
-
-# Добавляем правила работы DHCP
-cat > /etc/dhcp/dhcpd.conf <<EOL
-option domain-name "WORKGROUP";
-option domain-name-servers 8.8.8.8;
-default-lease-time 600;
-max-lease-time 7200;
-subnet 192.168.1.0 netmask 255.255.255.0
-{
-    range                       192.168.1.10 192.168.1.20;
-    option broadcast-address    192.168.1.255;
-    option routers              192.168.1.1;
-    option domain-name-servers  8.8.8.8;
+# Функция для симуляции загрузки
+simulate_loading() {
+  echo -n "Загрузка"
+  while kill -0 "$1" 2>/dev/null; do
+    echo -n "."
+    sleep 1
+  done
+  echo ""
 }
-EOL
 
-# Запускаем DHCP-сервер
-/etc/init.d/isc-dhcp-server start
+# Запускаем первую часть скрипта в фоне и логируем её
+(
+  echo "==== Начало выполнения первой части скрипта ===="
+
+  # Перезаписываем файл /etc/network/interfaces
+  cat > /etc/network/interfaces <<EOL
+  source /etc/network/interfaces.d/*
+  
+  auto lo
+  iface lo inet loopback
+  
+  # Основной интерфейс для подключения к сети
+  allow-hotplug enp0s3
+  iface enp0s3 inet dhcp
+  
+  # Конфигурация шлюза внутренней сети
+  allow-hotplug enp0s8
+  iface enp0s8 inet static
+  address           192.168.1.1
+  netmask           255.255.255.0
+  network           192.168.1.0
+  dns-nameservers   77.88.8.1 8.8.8.8
+  EOL
+
+  # Включаем интерфейс шлюза
+  ifup enp0s8
+  
+  # Устанавливаем iptables
+  apt-get install iptables-persistent netfilter-persistent gcc -y
+  
+  # Добавляем правило перенаправления трафика
+  iptables -t nat -A POSTROUTING -o enp0s3 -j MASQUERADE
+  iptables-save
+  netfilter-persistent save
+  
+  # Добавляем форвардинг
+  sysctl -w net.ipv4.ip_forward="1"
+  sysctl -p
+  
+  # Настраиваем DNS
+  apt install -y bind9 bind9utils swaks
+  
+  # Загружаем DHCP
+  apt install -y isc-dhcp-server
+  
+  # Добавляем интерфейс для работы DHCP
+  cat > /etc/default/isc-dhcp-server <<EOL
+  INTERFACESv4="enp0s8"
+  INTERFACESv6=""
+  EOL
+  
+  # Добавляем правила работы DHCP
+  cat > /etc/dhcp/dhcpd.conf <<EOL
+  option domain-name "WORKGROUP";
+  option domain-name-servers 8.8.8.8;
+  default-lease-time 600;
+  max-lease-time 7200;
+  subnet 192.168.1.0 netmask 255.255.255.0
+  {
+      range                       192.168.1.10 192.168.1.20;
+      option broadcast-address    192.168.1.255;
+      option routers              192.168.1.1;
+      option domain-name-servers  8.8.8.8;
+  }
+  EOL
+  
+    # Запускаем DHCP-сервер
+    /etc/init.d/isc-dhcp-server start
+  
+    echo "==== Завершение первой части скрипта ===="
+) > "$LOG_FILE" 2>&1 &
+
+# Запускаем симуляцию загрузки, пока выполняется первая часть
+simulate_loading $!
+
+echo "Переход ко второй части..."
+
+# === Часть 2 ===
 
 # Задание по созданию программы на C
 gcc -o app lab1.c
 chmod +x app
 
-# Ввод значений 
+# Ввод значений
 read -p "Введите первое число: " num1
 read -p "Введите второе число: " num2
 
