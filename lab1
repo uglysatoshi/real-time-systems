@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Лог-файл
-LOG_FILE="script.log"
+LOG_FILE="/var/log/script.log"
 
 # Проверяем, что скрипт запущен от имени root
 if [ "$EUID" -ne 0 ]; then
@@ -61,8 +61,14 @@ EOL
   # Настраиваем DNS
   apt install -y bind9 bind9utils swaks
 
-  # Загружаем DHCP
-  apt install -y isc-dhcp-server
+  # Загружаем DHCP с подавлением запросов на ввод
+  echo "Установка isc-dhcp-server..."  
+  DEBIAN_FRONTEND=noninteractive apt install -y isc-dhcp-server
+  if [ $? -ne 0 ]; then
+      echo "Ошибка при установке isc-dhcp-server" >> "$LOG_FILE"
+  else
+      echo "Установка isc-dhcp-server завершена успешно" >> "$LOG_FILE"
+  fi
 
   # Добавляем интерфейс для работы DHCP
   cat > /etc/default/isc-dhcp-server <<EOL
@@ -91,10 +97,21 @@ EOL
   echo "==== Завершение первой части скрипта ===="
 ) > "$LOG_FILE" 2>&1 &
 
-# Запускаем симуляцию загрузки, пока выполняется первая часть
-simulate_loading $!
+# Получаем PID фонового процесса
+PID=$!
 
-echo "Переход ко второй части..."
+# Запускаем симуляцию загрузки, пока выполняется первая часть
+simulate_loading $PID
+
+# Ждём завершения фонового процесса
+wait $PID
+
+# Проверяем код возврата фонового процесса
+if [ $? -ne 0 ]; then
+  echo "Произошла ошибка при выполнении первой части скрипта. Подробности в $LOG_FILE"
+else
+  echo "Первая часть завершена успешно. Переход ко второй части..."
+fi
 
 # === Часть 2 ===
 
@@ -108,3 +125,5 @@ read -p "Введите второе число: " num2
 
 # Запуск программы с забранными значениями
 ./app $num1 $num2
+
+echo "==== Завершение скрипта ===="
