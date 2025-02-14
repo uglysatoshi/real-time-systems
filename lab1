@@ -9,21 +9,14 @@ if [ "$EUID" -ne 0 ]; then
   exit 1
 fi
 
-# Функция для симуляции загрузки
-simulate_loading() {
-  echo -n "Загрузка"
-  while kill -0 "$1" 2>/dev/null; do
-    echo -n "."
-    sleep 1
-  done
-  echo ""
-}
+echo "==== Начало работы скрипта ===="
 
-# Запускаем первую часть скрипта в фоне и логируем её
-(
-  echo "==== Начало выполнения первой части скрипта ===="
+# === Логирование первой части ===
+echo "==== Начало первой части скрипта ===="
 
-  # Перезаписываем файл /etc/network/interfaces
+echo "Конфигурируем сеть..."
+{
+  # Конфигурация сети
   cat > /etc/network/interfaces <<EOL
 source /etc/network/interfaces.d/*
 
@@ -45,38 +38,48 @@ EOL
 
   # Включаем интерфейс шлюза
   ifup enp0s8
+} >> "$LOG_FILE" 2>&1
 
-  # Устанавливаем iptables
+echo "Устанавливаем iptables и зависимости..."
+{
   apt-get install iptables-persistent netfilter-persistent gcc -y
+} >> "$LOG_FILE" 2>&1
 
-  # Добавляем правило перенаправления трафика
+echo "Добавляем правило NAT..."
+{
   iptables -t nat -A POSTROUTING -o enp0s3 -j MASQUERADE
   iptables-save
   netfilter-persistent save
+} >> "$LOG_FILE" 2>&1
 
-  # Добавляем форвардинг
+echo "Включаем IP форвардинг..."
+{
   sysctl -w net.ipv4.ip_forward="1"
   sysctl -p
+} >> "$LOG_FILE" 2>&1
 
-  # Настраиваем DNS
+echo "Настраиваем DNS..."
+{
   apt install -y bind9 bind9utils swaks
+} >> "$LOG_FILE" 2>&1
 
-  # Загружаем DHCP с подавлением запросов на ввод
-  echo "Установка isc-dhcp-server..."  
+echo "Устанавливаем DHCP сервер..."
+{
   DEBIAN_FRONTEND=noninteractive apt install -y isc-dhcp-server
   if [ $? -ne 0 ]; then
-      echo "Ошибка при установке isc-dhcp-server" >> "$LOG_FILE"
+    echo "Ошибка при установке isc-dhcp-server"
   else
-      echo "Установка isc-dhcp-server завершена успешно" >> "$LOG_FILE"
+    echo "DHCP сервер установлен успешно"
   fi
+} >> "$LOG_FILE" 2>&1
 
-  # Добавляем интерфейс для работы DHCP
+echo "Конфигурируем DHCP..."
+{
   cat > /etc/default/isc-dhcp-server <<EOL
 INTERFACESv4="enp0s8"
 INTERFACESv6=""
 EOL
 
-  # Добавляем правила работы DHCP
   cat > /etc/dhcp/dhcpd.conf <<EOL
 option domain-name "WORKGROUP";
 option domain-name-servers 8.8.8.8;
@@ -90,32 +93,23 @@ subnet 192.168.1.0 netmask 255.255.255.0
     option domain-name-servers  8.8.8.8;
 }
 EOL
+} >> "$LOG_FILE" 2>&1
 
-  # Запускаем DHCP-сервер
+echo "Запускаем DHCP-сервер..."
+{
   /etc/init.d/isc-dhcp-server start
+} >> "$LOG_FILE" 2>&1
 
-  echo "==== Завершение первой части скрипта ===="
-) > "$LOG_FILE" 2>&1 &
+echo "==== Завершение первой части скрипта ===="
+echo "Первая часть завершена. Лог сохранён в $LOG_FILE"
 
-# Получаем PID фонового процесса
-PID=$!
-
-# Запускаем симуляцию загрузки, пока выполняется первая часть
-simulate_loading $PID
-
-# Ждём завершения фонового процесса
-wait $PID
-
-# Проверяем код возврата фонового процесса
-if [ $? -ne 0 ]; then
-  echo "Произошла ошибка при выполнении первой части скрипта. Подробности в $LOG_FILE"
-else
-  echo "Первая часть завершена успешно. Переход ко второй части..."
-fi
+echo "Переход ко второй части..."
 
 # === Часть 2 ===
+echo "==== Начало второй части скрипта ===="
 
 # Задание по созданию программы на C
+echo "Компилируем программу на C..."
 gcc -o app lab1.c
 chmod +x app
 
