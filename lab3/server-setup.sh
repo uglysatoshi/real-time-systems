@@ -64,6 +64,41 @@ sudo sed -i 's/^#write_enable=YES/write_enable=YES/' /etc/vsftpd.conf
 echo "allow_writeable_chroot=YES" | sudo tee -a /etc/vsftpd.conf
 sudo systemctl restart vsftpd
 
+# === Настройка SFTP ===
+echo "Настроим SFTP..."
+
+# Резервное копирование оригинального конфигурационного файла
+cp /etc/ssh/sshd_config /etc/ssh/sshd_config.backup
+
+# Разрешение SFTP и ограничение доступа в определенную директорию для пользователей
+echo "Subsystem sftp internal-sftp" >> /etc/ssh/sshd_config
+
+# Добавление ограничений для пользователей
+echo "
+Match Group sftpusers
+    ChrootDirectory /home/%u
+    ForceCommand internal-sftp
+    AllowTcpForwarding no
+" >> /etc/ssh/sshd_config
+
+# Перезапуск SSH сервиса для применения изменений
+systemctl restart ssh
+
+# === Создание пользователя для SFTP ===
+read -p "Введите имя пользователя для SFTP: " SFTP_USER
+adduser --disabled-password --gecos "" $SFTP_USER
+mkdir -p /home/$SFTP_USER/uploads
+chown root:root /home/$SFTP_USER
+chmod 755 /home/$SFTP_USER
+chown $SFTP_USER:$SFTP_USER /home/$SFTP_USER/uploads
+
+# Добавление пользователя в группу sftpusers
+usermod -aG sftpusers $SFTP_USER
+
+# Вывод информации
+echo "✅ Настройка SFTP завершена."
+echo "Пользователь $SFTP_USER был создан и может использовать SFTP для доступа к /home/$SFTP_USER/uploads."
+
 # === НАСТРОЙКА VNC ===
 echo "Настройка VNC..."
 sudo -u $(logname) tightvncserver :1
