@@ -4,7 +4,7 @@
 FTP_SERVER="192.168.0.117"                                      # IP или хост FTP-сервера
 FTP_USER="labuser"                                              # Логин
 FTP_PASS="7145"                                                 # Пароль
-LOCAL_FILE="/home/valery/real-time-systems/lab3/test.txt"       # Файл, который загружаем
+LOCAL_FILE="test.txt"       # Файл, который загружаем
 REMOTE_DIR="/home/labuser/"                                     # Директория на сервере
 
 # Проверка существования файла
