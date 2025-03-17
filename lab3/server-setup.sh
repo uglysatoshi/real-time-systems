@@ -27,7 +27,8 @@ sudo apt install -y \
     xinetd \
     telnetd \
     netcat-openbsd \
-    neofetch
+    neofetch \
+    ufw
 
 # === НАСТРОЙКА SSH ===
 echo "Включение SSH-сервера..."
