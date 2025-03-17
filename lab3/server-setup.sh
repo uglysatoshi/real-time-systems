@@ -11,6 +11,7 @@ sudo apt install -y \
     openvpn \
     tightvncserver \
     samba \
+    xinetd \
     telnetd \
     netcat-openbsd
 
@@ -43,8 +44,22 @@ sudo chmod -R 777 /srv/samba/share
 sudo systemctl restart smbd
 
 # === НАСТРОЙКА TELNET ===
-echo "Запуск Telnet-сервера..."
-sudo systemctl enable --now inetd
+echo "Конфигурация Telnet-сервера..."
+
+# Создадим конфигурацию для Telnet в xinetd
+echo 'service telnet
+{
+    disable = no
+    socket_type = stream
+    wait = no
+    user = root
+    server = /usr/sbin/in.telnetd
+    log_on_failure += USERID
+}' | sudo tee /etc/xinetd.d/telnet
+
+# Перезапустим сервис xinetd
+sudo systemctl enable --now xinetd
+sudo systemctl restart xinetd
 
 # === НАСТРОЙКА NETCAT ===
 echo "Запуск Netcat для прослушивания порта 4444..."
