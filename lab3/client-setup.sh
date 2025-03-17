@@ -18,7 +18,8 @@ sudo apt install -y \
     telnet \
     netcat-openbsd \
     openssh-sftp-server \
-    sshpass
+    sshpass \
+    expect
 
 # Добавление тестового пользователя
 TEST_USER="labuser"
