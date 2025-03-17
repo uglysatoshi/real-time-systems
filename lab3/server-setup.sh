@@ -10,6 +10,8 @@ fi
 PG_HBA="/etc/postgresql/*/main/pg_hba.conf"
 PG_CONF="/etc/postgresql/*/main/postgresql.conf"
 SUBNET="192.168.0.0/24" # Разрешённая подсеть
+TEST_USER="labuser"
+TEST_PASS="7145"
 
 echo "Обновление пакетов..."
 sudo apt update && sudo apt upgrade -y
@@ -95,8 +97,7 @@ echo "Запуск Netcat для прослушивания порта 4444..."
 sudo nc -lvnp 4444 &
 
 # === СОЗДАНИЕ ТЕСТОВОГО ПОЛЬЗОВАТЕЛЯ ===
-TEST_USER="labuser"
-TEST_PASS="labpassword"
+
 echo "Создание тестового пользователя $TEST_USER..."
 sudo useradd -m -s /bin/bash "$TEST_USER"
 echo "$TEST_USER:$TEST_PASS" | sudo chpasswd
