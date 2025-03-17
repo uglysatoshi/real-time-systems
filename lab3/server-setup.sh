@@ -34,6 +34,7 @@ sudo systemctl enable --now ssh
 echo "Настройка PostgreSQL..."
 sudo systemctl enable --now postgresql
 sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'postgres';"
+sudo -u postgres psql -c "CREATE DATABASE testdb;" 2>/dev/null
 
 # === Разрешаем удалённые подключения в pg_hba.conf ===
 echo "Настраиваем pg_hba.conf..."
