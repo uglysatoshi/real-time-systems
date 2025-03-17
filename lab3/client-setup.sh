@@ -1,5 +1,7 @@
 #!/bin/bash
 
+SERVER_IP=192.168.0.117
+
 # Обновление системы
 echo "Обновление списка пакетов..."
 sudo apt update && sudo apt upgrade -y
@@ -28,7 +30,8 @@ echo "$TEST_USER:$TEST_PASS" | sudo chpasswd
 
 # Создание тестовой SSH-пары
 echo "Создание SSH-ключей..."
-sudo -u "$TEST_USER" ssh-keygen -t rsa -b 2048 -f "/home/$TEST_USER/.ssh/id_rsa" -q -N ""
+ssh-keygen -t rsa -b 2048 -f ~/.ssh/id_rsa -N ""
+ssh-copy-id -i ~/.ssh/id_rsa labuser@$SERVER_IP
 
 # Вывод информации о системе
 echo "Подготовка завершена!"
