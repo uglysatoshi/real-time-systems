@@ -112,8 +112,9 @@ else
     echo "Брандмауфер UFW не активен, пропускаем настройку."
 fi
 
+echo "telnet  stream  tcp  nowait  root  /usr/sbin/telnetd  telnetd" | sudo tee -a /etc/inetd.conf
 echo "Перезапускаем службу Telnet..."
-sudo systemctl restart xinetd
+systemctl restart inetd
 
 # === НАСТРОЙКА NETCAT ===
 echo "Запуск Netcat для прослушивания порта 4444..."
