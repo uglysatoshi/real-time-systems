@@ -1,5 +1,16 @@
 #!/bin/bash
 
+# Проверка прав
+if [[ $EUID -ne 0 ]]; then
+    echo "Этот скрипт нужно запускать с sudo!"
+    exit 1
+fi
+
+# === Переменные ===
+PG_HBA="/etc/postgresql/*/main/pg_hba.conf"
+PG_CONF="/etc/postgresql/*/main/postgresql.conf"
+SUBNET="192.168.0.0/24" # Разрешённая подсеть
+
 echo "Обновление пакетов..."
 sudo apt update && sudo apt upgrade -y
 
@@ -23,6 +34,23 @@ sudo systemctl enable --now ssh
 echo "Настройка PostgreSQL..."
 sudo systemctl enable --now postgresql
 sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'postgres';"
+
+# === Разрешаем удалённые подключения в pg_hba.conf ===
+echo "Настраиваем pg_hba.conf..."
+if ! grep -q "$SUBNET" $PG_HBA; then
+    echo "host    all    all    $SUBNET    md5" | sudo tee -a $PG_HBA
+else
+    echo "Подсеть $SUBNET уже разрешена в pg_hba.conf."
+fi
+
+# === Разрешаем прослушивание всех IP в postgresql.conf ===
+echo "Настраиваем postgresql.conf..."
+sudo sed -i "s/^#listen_addresses = 'localhost'/listen_addresses = '*'/" $PG_CONF
+sudo sed -i "s/^listen_addresses = 'localhost'/listen_addresses = '*'/" $PG_CONF
+
+# === Перезапускаем PostgreSQL ===
+echo "Перезапуск PostgreSQL..."
+sudo systemctl restart postgresql
 
 # === НАСТРОЙКА FTP (vsftpd) ===
 echo "Настройка FTP..."
