@@ -26,7 +26,8 @@ sudo apt install -y \
     samba \
     xinetd \
     telnetd \
-    netcat-openbsd
+    netcat-openbsd \
+    neofetch
 
 # === НАСТРОЙКА SSH ===
 echo "Включение SSH-сервера..."
