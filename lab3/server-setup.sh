@@ -93,6 +93,27 @@ echo 'service telnet
 sudo systemctl enable --now xinetd
 sudo systemctl restart xinetd
 
+# Проверяем, что служба работает
+if systemctl is-active --quiet inetd; then
+    echo "✅ Telnet-сервер успешно запущен и работает!"
+else
+    echo "❌ Ошибка при запуске Telnet-сервера."
+fi
+
+# === Открытие порта в брандмауэре (если используется UFW) ===
+echo "Проверим настройки брандмауэра..."
+if sudo ufw status | grep -q "active"; then
+    echo "Открываем порт 23 (Telnet) в брандмауэре..."
+    sudo ufw allow 23/tcp
+    sudo ufw reload
+    echo "✅ Порт 23 открыт в брандмауэре."
+else
+    echo "Брандмауфер UFW не активен, пропускаем настройку."
+fi
+
+echo "Перезапускаем службу Telnet..."
+sudo systemctl restart xinetd
+
 # === НАСТРОЙКА NETCAT ===
 echo "Запуск Netcat для прослушивания порта 4444..."
 sudo nc -lvnp 4444 &
