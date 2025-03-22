@@ -27,8 +27,7 @@ sudo apt install -y \
     xinetd \
     telnetd \
     netcat-openbsd \
-    neofetch \
-    ufw
+    neofetch
 
 # === НАСТРОЙКА SSH ===
 echo "Включение SSH-сервера..."
@@ -134,17 +133,6 @@ if systemctl is-active --quiet inetd; then
     echo "✅ Telnet-сервер успешно запущен и работает!"
 else
     echo "❌ Ошибка при запуске Telnet-сервера."
-fi
-
-# === Открытие порта в брандмауэре (если используется UFW) ===
-echo "Проверим настройки брандмауэра..."
-if sudo ufw status | grep -q "active"; then
-    echo "Открываем порт 23 (Telnet) в брандмауэре..."
-    sudo ufw allow 23/tcp
-    sudo ufw reload
-    echo "✅ Порт 23 открыт в брандмауэре."
-else
-    echo "Брандмауфер UFW не активен, пропускаем настройку."
 fi
 
 echo "telnet  stream  tcp  nowait  root  /usr/sbin/telnetd  telnetd" | sudo tee -a /etc/inetd.conf
