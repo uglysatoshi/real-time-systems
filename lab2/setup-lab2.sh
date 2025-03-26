@@ -42,7 +42,7 @@ sudo systemctl start knockd
 
 echo "knockd установлен и запущен успешно!"
 
-mv ~/rts/lab2 /home/lab2
+mv /home/valery/rts/lab2 /home/lab2
 
 # Создаем новую директорию /home/lab2/results
 mkdir -p /home/lab2/results
