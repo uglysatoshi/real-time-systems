@@ -8,4 +8,4 @@ sum=0
 for ((i=1; i<=N; i++)); do
   sum=$((sum + i))
 done
-echo "Сумма чисел от 1 до $N: $sum" > result_loops.txt
+echo "Сумма чисел от 1 до $N: $sum" > /home/lab2/results/result_loops.txt
