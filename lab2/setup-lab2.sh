@@ -41,3 +41,13 @@ sudo cp "$SCRIPT_DIR/knockd.conf" /etc/knockd.conf
 sudo systemctl start knockd
 
 echo "knockd установлен и запущен успешно!"
+
+mv ~/rts/lab2 /home/lab2
+
+# Создаем новую директорию /home/lab2/results
+mkdir -p /home/lab2/results
+
+# Меняем владельца директории results на root
+chown root:root /home/lab2/results
+
+echo "Проект успешно загружен и настроен!"
